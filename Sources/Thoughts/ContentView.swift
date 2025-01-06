@@ -10,17 +10,39 @@ struct ContentView: View {
         ZStack {
             Color.clear
             
-            TextEditor(text: $thoughtText)
-                .font(.system(size: 14))
-                .padding(5)
-                .focused($isFocused)
-                .background(.clear)
-                .colorScheme(.dark)
+            if #available(macOS 13.0, *) {
+                TextEditor(text: $thoughtText)
+                    .font(.system(size: 18))
+                    .scrollContentBackground(.hidden)
+                    .background(.clear)
+                    .foregroundColor(.white)
+                    .overlay(
+                        Group {
+                            if thoughtText.isEmpty {
+                                Text("wazzzzzup")
+                                    .foregroundColor(.white.opacity(0.5))
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                                    .padding(.leading, 5)
+                                    .allowsHitTesting(false)
+                                    .font(.system(size: 18))
+                            }
+                        }
+                    )
+                    .padding(.top, 8)
+                    .padding(.leading, 8)
+                    .focused($isFocused)
+                    .tint(.white.opacity(0.7))
+            } else {
+                // Fallback on earlier versions
+            }
         }
-        .frame(width: 400, height: 300)
+        .frame(
+            width: CGFloat(QUICK_PANEL_WIDTH),
+            height: CGFloat(QUICK_PANEL_HEIGHT) + (CGFloat(thoughtText.filter { $0 == "\n" }.count)/2 * CGFloat(QUICK_PANEL_LINE_HEIGHT))
+        )
         .background(Material.ultraThinMaterial)
-        .opacity(0.95)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .opacity(0.98)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
         .onAppear {
             setupKeyMonitor()
             DispatchQueue.main.async {
@@ -50,6 +72,7 @@ struct ContentView: View {
     private func saveAndClose() {
         if !thoughtText.isEmpty {
             DatabaseManager.shared.saveThought(thoughtText)
+            thoughtText = ""
         }
         NSApplication.shared.keyWindow?.close()
     }
