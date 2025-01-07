@@ -18,13 +18,14 @@ struct ThoughtBrowserView: View {
                 .padding()
             
             List(filteredThoughts) { thought in
-                VStack(alignment: .leading) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(thought.content)
-                        .lineLimit(2)
+                        .font(.system(size: 14))
                     Text(thought.timestamp.formatted())
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
+                .padding(.vertical, 4)
             }
         }
         .frame(minWidth: 500, minHeight: 400)
