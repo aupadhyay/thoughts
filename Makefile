@@ -8,7 +8,7 @@ ARGS ?=
 BUILD_PATH = .build
 BINARY_PATH = $(BUILD_PATH)/$(CONFIG)/Thoughts
 APP_NAME = Thoughts.app
-APP_PATH = $(HOME)/Applications/$(APP_NAME)
+APP_PATH = /Applications/$(APP_NAME)
 CONTENTS_PATH = $(APP_PATH)/Contents
 RESOURCES_PATH = $(CONTENTS_PATH)/Resources
 
