@@ -89,7 +89,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             
             let menu = NSMenu()
             menu.addItem(withTitle: "Browse Thoughts", action: #selector(showBrowser(_:)), keyEquivalent: "b")
-            menu.addItem(withTitle: "Import SQLite Database", action: #selector(showImportWindow(_:)), keyEquivalent: "i")
+            menu.addItem(withTitle: "Manage DB", action: #selector(showManageWindow(_:)), keyEquivalent: "m")
             menu.addItem(NSMenuItem.separator())
             menu.addItem(withTitle: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
             
@@ -97,17 +97,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
     }
 
-    @objc func showImportWindow(_ sender: AnyObject?) {
+    @objc func showManageWindow(_ sender: AnyObject?) {
         showInDock()
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 400, height: 300),
+            contentRect: NSRect(x: 0, y: 0, width: 400, height: 500),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
         )
-        window.title = "Import SQLite Database"
+        window.title = "Manage Database"
         window.level = .floating
-        window.contentView = NSHostingView(rootView: SQLiteImportView())
+        window.contentView = NSHostingView(rootView: DatabaseManageView())
         window.center()
         window.makeKeyAndOrderFront(nil)
         window.orderFrontRegardless()

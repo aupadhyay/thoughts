@@ -28,7 +28,7 @@ install: release
 	@echo "Installed to ~/Applications/Thoughts.app"
 
 run: build
-	$(BINARY_PATH) $(ARGS)
+	swift run --configuration debug Thoughts $(ARGS) 2>&1
 
 browser: build
 	$(BINARY_PATH) --browser
