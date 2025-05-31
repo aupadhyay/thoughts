@@ -1,65 +1,55 @@
-# Thoughts
+# thoughts
 
-A lightweight macOS application for quickly capturing thoughts using a global keyboard shortcut. Features a floating window with a clean, modern interface similar to Spotlight.
+a lightweight macOS application for quickly capturing thoughts using a global keyboard shortcut. features a floating window with a clean, modern interface similar to spotlight.
 
-## Features
+## features
 
-- 🌤 Floating cloudy window interface
-- ⌨️ Global keyboard shortcut for quick access
-- 💾 Automatic saving to SQLite database
-- 🎯 Menu bar icon for easy access
-- ⚡️ Fast and lightweight
+- floating cloudy window interface
+- global keyboard shortcut for quick access
+- automatic saving to sqlite database
+- menu bar icon for easy access
+- fast and lightweight
 
-## Requirements
+## requirements
 
 - macOS 12.0 or later
-- Xcode 13.0 or later
-- Swift 5.5 or later
+- xcode 13.0 or later
+- swift 5.5 or later
 
-## Installation
+## installation
 
-### Quick Install
+### quick install
 
 ```bash
-# Build and install to Applications folder
+# build and install to applications folder
 make install
 ```
 
-### Development Setup
+### development setup
 
-1. Clone the repository
-2. Choose one:
-   - `make run` - Build and run directly for development
-   - `make install` - Build and install to Applications folder
-   - `make release` - Just build the release version
+1. clone the repository
+2. choose one:
+   - `make run` - build and run directly for development
+   - `make install` - build and install to applications folder
+   - `make release` - just build the release version
 
-Or manually:
+or manually:
 
 ```bash
-# Run for development
+# run for development
 swift build
-.build/debug/Thoughts
+.build/debug/thoughts
 
-# Install to Applications
+# install to applications
 make install
 ```
 
-## Development
-
-The project uses Swift Package Manager for dependency management. Main dependencies:
-
-- SQLite.swift for database operations
-
-## Project Structure
+## project structure
 
 ```
-Sources/
-  Thoughts/
-    ThoughtsApp.swift    # Main application entry
-    ContentView.swift    # Main UI view
-    ThoughtModel.swift   # Database and data model
+sources/
+  thoughts/
+    thoughtsapp.swift    # main application entry
+    contentview.swift    # main ui view
+    thoughtmodel.swift   # database and data model
 ```
-
-## License
-
-MIT License
