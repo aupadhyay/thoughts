@@ -21,6 +21,7 @@ struct ThoughtBrowserView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(thought.content)
                         .font(.system(size: 14))
+                        .textSelection(.enabled)
                     Text(thought.timestamp.formatted())
                         .font(.caption)
                         .foregroundColor(.gray)
