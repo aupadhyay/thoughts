@@ -78,4 +78,85 @@ class DatabaseManager {
         
         return result
     }
+    
+    func importFromDatabase(at fileURL: URL) async throws -> Int {
+        let sourceDB = try Connection(fileURL.path)
+        var importedCount = 0
+        
+        // Try to find a table with content and optionally timestamp columns
+        let tables = try sourceDB.prepare("SELECT name FROM sqlite_master WHERE type='table'")
+        
+        for table in tables {
+            let tableName = table[0] as! String
+            let columns = try sourceDB.prepare("PRAGMA table_info('\(tableName)')")
+            
+            var hasContent = false
+            var hasTimestamp = false
+            var contentColumnName = ""
+            var timestampColumnName = ""
+            
+            for column in columns {
+                let name = column[1] as! String
+                let type = column[2] as! String
+                
+                // Look for content-like columns
+                if ["content", "text", "body", "note"].contains(name.lowercased()) {
+                    hasContent = true
+                    contentColumnName = name
+                }
+                
+                // Look for timestamp-like columns
+                if ["timestamp", "date", "created_at", "updated_at"].contains(name.lowercased()) &&
+                   ["timestamp", "datetime", "date", "integer"].contains(type.lowercased()) {
+                    hasTimestamp = true
+                    timestampColumnName = name
+                }
+            }
+            
+            if hasContent {
+                let query: String
+                if hasTimestamp {
+                    query = "SELECT \(contentColumnName), \(timestampColumnName) FROM \(tableName)"
+                } else {
+                    query = "SELECT \(contentColumnName) FROM \(tableName)"
+                }
+                
+                for row in try sourceDB.prepare(query) {
+                    let content = row[0] as! String
+                    let timestamp: Date
+                    
+                    if hasTimestamp {
+                        let rawValue = row[1]
+                        if let timeInterval = rawValue as? Double {
+                            timestamp = Date(timeIntervalSince1970: timeInterval)
+                        } else if let timeInterval = rawValue as? Int64 {
+                            timestamp = Date(timeIntervalSince1970: TimeInterval(timeInterval))
+                        } else if let timeString = rawValue as? String {
+                            // Try to parse common date formats
+                            let formatter = DateFormatter()
+                            formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+                            if let date = formatter.date(from: timeString) {
+                                timestamp = date
+                            } else {
+                                timestamp = Date()
+                            }
+                        } else {
+                            timestamp = Date()
+                        }
+                    } else {
+                        timestamp = Date()
+                    }
+                    
+                    let insert = thoughts.insert([
+                        self.content <- content,
+                        self.timestamp <- timestamp
+                    ])
+                    try db?.run(insert)
+                    importedCount += 1
+                }
+            }
+        }
+        
+        return importedCount
+    }
 } 

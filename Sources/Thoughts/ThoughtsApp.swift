@@ -86,8 +86,31 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem?.button {
             button.image = NSImage(systemSymbolName: "cloud.fill", accessibilityDescription: "Thoughts")
-            button.action = #selector(showBrowser(_:))
+            
+            let menu = NSMenu()
+            menu.addItem(withTitle: "Browse Thoughts", action: #selector(showBrowser(_:)), keyEquivalent: "b")
+            menu.addItem(withTitle: "Import SQLite Database", action: #selector(showImportWindow(_:)), keyEquivalent: "i")
+            menu.addItem(NSMenuItem.separator())
+            menu.addItem(withTitle: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+            
+            statusItem?.menu = menu  // Set the menu on the statusItem, not the button
         }
+    }
+
+    @objc func showImportWindow(_ sender: AnyObject?) {
+        showInDock()
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 400, height: 300),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Import SQLite Database"
+        window.level = .floating
+        window.contentView = NSHostingView(rootView: SQLiteImportView())
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+        window.orderFrontRegardless()
     }
 
     private func setupShortcuts() {
