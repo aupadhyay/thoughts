@@ -31,7 +31,9 @@ struct ThoughtBrowserView: View {
         }
         .frame(minWidth: 500, minHeight: 400)
         .onAppear {
-            thoughts = DatabaseManager.shared.getAllThoughts()
+            Task {
+                thoughts = await DatabaseManager.shared.getAllThoughts()
+            }
         }
     }
 } 

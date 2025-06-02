@@ -3,72 +3,43 @@ import type { Thought as DBThought } from "./db"
 import { z } from "zod"
 import { defineAction } from "./defineAction"
 
-export const UserSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  email: z.string().email(),
-})
-export type User = z.infer<typeof UserSchema>
-
 export const ThoughtSchema = z.object({
   id: z.string(),
-  userId: z.string(),
   content: z.string(),
   createdAt: z.date(),
 })
 export type Thought = z.infer<typeof ThoughtSchema>
 
-// Action: createThought
 export const createThought = defineAction(
   z.object({
-    userId: z.string(),
     content: z.string(),
   }),
   ThoughtSchema,
-  async ({ userId, content }) => {
+  async (val) => {
+    console.log("createThought", val)
+    const content = val.content
     db.saveThought(content)
     return {
       id: String(Date.now()),
-      userId,
       content,
       createdAt: new Date(),
     }
   }
 )
 
-// Action: getThoughts
 export const getThoughts = defineAction(
-  z.object({
-    userId: z.string(),
-  }),
+  z.object({}),
   ThoughtSchema.array(),
-  async ({ userId }) => {
+  async () => {
     const dbThoughts = db.getAllThoughts()
     return dbThoughts.map((thought: DBThought) => ({
       id: thought.id.toString(),
-      userId,
       content: thought.content,
       createdAt: thought.timestamp,
     }))
   }
 )
 
-// Action: getUser
-export const getUser = defineAction(
-  z.object({
-    userId: z.string(),
-  }),
-  UserSchema.nullable(),
-  async ({ userId }) => {
-    return {
-      id: userId,
-      name: "Example User",
-      email: "user@example.com",
-    }
-  }
-)
-
-// Action: updateThought
 export const updateThought = defineAction(
   z.object({
     thoughtId: z.string(),
@@ -81,7 +52,6 @@ export const updateThought = defineAction(
   }
 )
 
-// Action: deleteThought
 export const deleteThought = defineAction(
   z.object({
     thoughtId: z.string(),
@@ -93,18 +63,62 @@ export const deleteThought = defineAction(
   }
 )
 
-// -----------------------
-// Database management helpers (unchanged)
-// -----------------------
+export const importDatabase = defineAction(
+  z.object({
+    filePath: z.string(),
+  }),
+  z.object({
+    importedCount: z.number(),
+  }),
+  async ({ filePath }) => {
+    try {
+      console.log("importDatabase", filePath)
+      const importedCount = await db.importFromDatabase(filePath)
+      return {
+        importedCount,
+      }
+    } catch (error) {
+      console.error("Import failed:", error)
+      throw new Error(
+        `Failed to import database: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      )
+    }
+  }
+)
 
-export async function importDatabase(filePath: string): Promise<number> {
-  return await db.importFromDatabase(filePath)
-}
+export const deleteAllThoughts = defineAction(
+  z.object({}),
+  z.object({
+    success: z.boolean(),
+  }),
+  async () => {
+    db.deleteAllThoughts()
+    return {
+      success: true,
+    }
+  }
+)
 
-export async function deleteAllThoughts(): Promise<void> {
-  db.deleteAllThoughts()
-}
+export const getDatabasePath = defineAction(
+  z.object({}),
+  z.object({
+    path: z.string().nullable(),
+  }),
+  async () => {
+    return {
+      path: db.getDatabasePath(),
+    }
+  }
+)
 
-export function getDatabasePath(): string | null {
-  return db.getDatabasePath()
-}
+export const runLLM = defineAction(
+  z.object({
+    prompt: z.string(),
+  }),
+  z.string(),
+  async ({ prompt }) => {
+    return "Hello, world!"
+  }
+)

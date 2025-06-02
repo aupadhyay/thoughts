@@ -63,8 +63,10 @@ class DatabaseManager {
   public saveThought(content: string): void {
     if (!this.db) throw new Error("Database not initialized")
 
-    const stmt = this.db.prepare("INSERT INTO thoughts (content) VALUES (?)")
-    stmt.run(content)
+    const stmt = this.db.prepare(
+      "INSERT INTO thoughts (content, timestamp) VALUES (?, ?)"
+    )
+    stmt.run(content, new Date().toISOString())
   }
 
   public getAllThoughts(): Thought[] {

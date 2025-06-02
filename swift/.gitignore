@@ -1,3 +1,6 @@
+# We'll always generate this from the backend
+OpenAPIClient/
+
 # Xcode
 .DS_Store
 xcuserdata/

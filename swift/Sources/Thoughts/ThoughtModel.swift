@@ -1,187 +1,103 @@
 import Foundation
-import SQLite
-
-typealias Expression = SQLite.Expression
+import OpenAPIClient
 
 struct Thought: Identifiable {
-    let id: Int64
+    let id: String
     let content: String
     let timestamp: Date
+    
+    init(from apiThought: CreateThoughtPost200Response) {
+        self.id = apiThought.id
+        self.content = apiThought.content
+        // Parse the ISO 8601 date string
+        let formatter = ISO8601DateFormatter()
+        self.timestamp = formatter.date(from: apiThought.createdAt) ?? Date()
+    }
 }
 
 class DatabaseManager {
     static let shared = DatabaseManager()
-    private var db: Connection?
-
-    // Table definition
-    private let thoughts = Table("thoughts")
-    private let id = Expression<Int64>("id")
-    private let content = Expression<String>("content")
-    private let timestamp = Expression<Date?>("timestamp")
-
-    private init() {
-        do {
-            let path = NSSearchPathForDirectoriesInDomains(
-                .applicationSupportDirectory, .userDomainMask, true
-            ).first!
-
-            let appDir = (path as NSString).appendingPathComponent("Thoughts")
-            try FileManager.default.createDirectory(
-                atPath: appDir,
-                withIntermediateDirectories: true,
-                attributes: nil
-            )
-
-            let dbPath = (appDir as NSString).appendingPathComponent("thoughts.sqlite3")
-            db = try Connection(dbPath)
-
-            try db?.run(thoughts.create(ifNotExists: true) { table in
-                table.column(id, primaryKey: .autoincrement)
-                table.column(content)
-                table.column(timestamp)
-            })
-        } catch {
-            print("Database initialization error: \(error)")
-        }
-    }
-
-    func getDatabasePath() -> String? {
-        let path = NSSearchPathForDirectoriesInDomains(
-            .applicationSupportDirectory, .userDomainMask, true
-        ).first!
-        let appDir = (path as NSString).appendingPathComponent("Thoughts")
-        return (appDir as NSString).appendingPathComponent("thoughts.sqlite3")
-    }
-
-    func saveThought(_ text: String) {
-        do {
-            let insert = thoughts.insert([
-                content <- text,
-                timestamp <- Date()
-            ])
-            try db?.run(insert)
-        } catch {
-            print("Failed to save thought: \(error)")
-        }
-    }
-
-    func getAllThoughts() -> [Thought] {
-        var result: [Thought] = []
-
-        do {
-            if let db = db {
-                for row in try db.prepare(thoughts.order(timestamp.desc)) {
-                    if let ts = row[timestamp] {
-                        result.append(Thought(
-                            id: row[id],
-                            content: row[content],
-                            timestamp: ts
-                        ))
-                    }
-                }
-            }
-        } catch {
-            print("Failed to fetch thoughts: \(error)")
-        }
-
-        return result
-    }
-
-    func importFromDatabase(at fileURL: URL) async throws -> Int {
-        let sourceDB = try Connection(fileURL.path)
-        var importedCount = 0
-
-        // Try to find a table with content and optionally timestamp columns
-        let tables = try sourceDB.prepare("SELECT name FROM sqlite_master WHERE type='table'")
-
-        for table in tables {
-            let tableName = table[0] as! String
-            let columns = try sourceDB.prepare("PRAGMA table_info('\(tableName)')")
-
-            var hasContent = false
-            var hasTimestamp = false
-            var contentColumnName = ""
-            var timestampColumnName = ""
-
-            for column in columns {
-                let name = column[1] as! String
-                let type = column[2] as! String
-
-                // Look for content-like columns
-                if ["content", "text", "body", "note"].contains(name.lowercased()) {
-                    hasContent = true
-                    contentColumnName = name
-                }
-
-                if ["timestamp", "date", "created_at", "updated_at"].contains(name.lowercased()) &&
-                   ["timestamp", "datetime", "date", "integer", "text"].contains(type.lowercased()) {
-                    hasTimestamp = true
-                    timestampColumnName = name
-                }
-            }
-
-            if hasContent {
-                let query: String
-                if hasTimestamp {
-                    query = "SELECT \(contentColumnName), \(timestampColumnName) FROM \(tableName)"
+    
+    private init() {}
+    
+    func getDatabasePath() async -> String? {
+        return await withCheckedContinuation { continuation in
+            DefaultAPI.getDatabasePathPost() { data, error in
+                if let error = error {
+                    print("Failed to get database path: \(error)")
+                    continuation.resume(returning: nil)
+                } else if let data = data {
+                    continuation.resume(returning: data.path)
                 } else {
-                    query = "SELECT \(contentColumnName) FROM \(tableName)"
-                }
-
-                for row in try sourceDB.prepare(query) {
-                    let content = row[0] as! String
-                    let timestamp: Date
-                    if hasTimestamp {
-                        let rawValue = row[1]
-                        if let timeInterval = rawValue as? Double {
-                            timestamp = Date(timeIntervalSince1970: timeInterval)
-                        } else if let timeInterval = rawValue as? Int64 {
-                            timestamp = Date(timeIntervalSince1970: TimeInterval(timeInterval))
-                        } else if let timeString = rawValue as? String {
-                            // Try ISO 8601 first
-                            if let isoDate = ISO8601DateFormatter().date(from: timeString) {
-                                timestamp = isoDate
-                            } else {
-                                // Fallback to other common formats
-                                let formatter = DateFormatter()
-                                formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
-                                if let date = formatter.date(from: timeString) {
-                                    timestamp = date
-                                } else {
-                                    formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-                                    if let date = formatter.date(from: timeString) {
-                                        timestamp = date
-                                    } else {
-                                        timestamp = Date()
-                                    }
-                                }
-                            }
-                        } else {
-                            timestamp = Date()
-                        }
-                    } else {
-                        timestamp = Date()
-                    }
-
-                    let insert = thoughts.insert([
-                        self.content <- content,
-                        self.timestamp <- timestamp
-                    ])
-                    try db?.run(insert)
-                    importedCount += 1
+                    continuation.resume(returning: nil)
                 }
             }
         }
-
-        return importedCount
     }
-
+    
+    func saveThought(_ text: String) {
+        Task {
+            let request = CreateThoughtPostRequest(content: text)
+            
+            DefaultAPI.createThoughtPost(createThoughtPostRequest: request) { data, error in
+                if let error = error {
+                    print("Failed to save thought: \(error)")
+                } else if let data = data {
+                    print("Successfully saved thought with ID: \(data.id)")
+                } else {
+                    print("No response data received")
+                }
+            }
+        }
+    }
+    
+    func getAllThoughts() async -> [Thought] {
+        return await withCheckedContinuation { continuation in
+            DefaultAPI.getThoughtsPost { data, error in
+                if let error = error {
+                    print("Failed to fetch thoughts: \(error)")
+                    continuation.resume(returning: [])
+                } else if let data = data {
+                    let thoughts = data.map { Thought(from: $0) }
+                    continuation.resume(returning: thoughts)
+                } else {
+                    continuation.resume(returning: [])
+                }
+            }
+        }
+    }
+    
+    func importFromDatabase(at fileURL: URL) async throws -> Int {
+        return try await withCheckedThrowingContinuation { continuation in
+            let request = ImportDatabasePostRequest(filePath: fileURL.path)
+            
+            DefaultAPI.importDatabasePost(importDatabasePostRequest: request) { data, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                } else if let data = data {
+                    continuation.resume(returning: Int(data.importedCount))
+                } else {
+                    continuation.resume(throwing: NSError(domain: "DatabaseImport", code: 0, userInfo: [NSLocalizedDescriptionKey: "No response data received"]))
+                }
+            }
+        }
+    }
+    
     func deleteAllThoughts() {
-        do {
-            let deleteAll = thoughts.delete()
-            try db?.run(deleteAll)
-        } catch {
-            print("Failed to delete all thoughts: \(error)")
+        Task {
+            DefaultAPI.deleteAllThoughtsPost { data, error in
+                if let error = error {
+                    print("Failed to delete all thoughts: \(error)")
+                } else if let data = data {
+                    if data.success {
+                        print("Successfully deleted all thoughts")
+                    } else {
+                        print("Failed to delete all thoughts")
+                    }
+                } else {
+                    print("No response data received")
+                }
+            }
         }
     }
 }

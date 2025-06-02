@@ -1,4 +1,4 @@
-.PHONY: build clean run test release install browser
+.PHONY: build clean run test release install browser watch-openapi watch-openapi-fswatch
 
 # Default configuration
 CONFIG ?= debug
@@ -39,6 +39,13 @@ clean:
 	rm -rf $(BUILD_PATH)
 	rm -rf *.xcodeproj
 	rm -rf $(APP_PATH)
+
+generate-swift-client:
+	openapi-generator-cli generate \
+      -i backend/openapi.json \
+      -g swift5 \
+      -o swift/OpenAPIClient \
+      --additional-properties=asyncAwait=true,packageName=OpenAPIClient
 
 test:
 	cd $(SWIFT_DIR) && swift test

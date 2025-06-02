@@ -6,8 +6,8 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "start": "npm run build && node dist/index.js",
-    "dev": "NODE_ENV=development nodemon --ext ts --exec 'npm run build && node dist/index.js'"
+    "start": "pnpm tsx index.ts",
+    "dev": "NODE_ENV=development nodemon --ext ts --exec 'pnpm tsx index.ts'"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.3.2",

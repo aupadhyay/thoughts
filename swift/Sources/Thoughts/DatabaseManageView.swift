@@ -7,6 +7,7 @@ struct DatabaseManageView: View {
     @State private var isImporting = false
     @State private var showingDeleteConfirmation = false
     @State private var copySuccess = false
+    @State private var databasePath: String?
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -18,7 +19,7 @@ struct DatabaseManageView: View {
             // Current Database Section
             GroupBox(label: Text("Current Database")) {
                 VStack(spacing: 15) {
-                    if let dbPath = DatabaseManager.shared.getDatabasePath() {
+                    if let dbPath = databasePath {
                         Text(dbPath)
                             .font(.system(.caption, design: .monospaced))
                             .foregroundColor(.secondary)
@@ -40,6 +41,9 @@ struct DatabaseManageView: View {
                                 Text(copySuccess ? "Copied!" : "Copy Path")
                             }
                         }
+                    } else {
+                        Text("Loading database path...")
+                            .foregroundColor(.secondary)
                     }
                 }
                 .padding()
@@ -123,6 +127,11 @@ struct DatabaseManageView: View {
             .padding()
         }
         .frame(width: 400, height: 500)
+        .onAppear {
+            Task {
+                databasePath = await DatabaseManager.shared.getDatabasePath()
+            }
+        }
         .alert("Delete All Thoughts", isPresented: $showingDeleteConfirmation) {
             Button("Cancel", role: .cancel) { }
             Button("Delete", role: .destructive) {

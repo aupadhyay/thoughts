@@ -7,14 +7,14 @@ let package = Package(
         .macOS(.v12)
     ],
     dependencies: [
-        .package(url: "https://github.com/stephencelis/SQLite.swift.git", from: "0.14.1"),
         .package(url: "https://github.com/sindresorhus/KeyboardShortcuts", .exact("1.15.0")),
+        .package(path: "OpenAPIClient"),
     ],
     targets: [
         .executableTarget(
             name: "Thoughts",
             dependencies: [
-                .product(name: "SQLite", package: "SQLite.swift"),
+                .product(name: "OpenAPIClient", package: "OpenAPIClient"),
                 .product(name: "KeyboardShortcuts", package: "KeyboardShortcuts"),
             ],
             path: "Sources"
