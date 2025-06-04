@@ -84,6 +84,21 @@ class DatabaseManager {
     }))
   }
 
+  public getThought(id: number): Thought | null {
+    if (!this.db) throw new Error("Database not initialized")
+
+    const stmt = this.db.prepare("SELECT * FROM thoughts WHERE id = ?")
+    const row = stmt.get(id) as any
+
+    if (!row) return null
+
+    return {
+      id: row.id,
+      content: row.content,
+      timestamp: new Date(row.timestamp),
+    }
+  }
+
   public async importFromDatabase(filePath: string): Promise<number> {
     if (!this.db) throw new Error("Database not initialized")
 
