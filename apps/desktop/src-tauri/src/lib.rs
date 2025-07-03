@@ -1,9 +1,5 @@
+use tauri::Manager;
 use tauri::Wry;
-use tauri::{
-    menu::{Menu, MenuItem},
-    tray::{TrayIconBuilder, TrayIconEvent},
-    Manager, WindowEvent,
-};
 
 #[tauri::command]
 fn toggle_window(app: tauri::AppHandle) {
