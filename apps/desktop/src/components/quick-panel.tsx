@@ -18,13 +18,16 @@ export function QuickPanel({ isOpen }: QuickPanelProps) {
 
   return (
     <div className="flex w-full items-start justify-center">
-      <div className="w-[600px] bg-white/20 backdrop-blur-[3px] rounded-xl shadow-2xl overflow-hidden">
+      <div
+        className="w-[600px] bg-white/20 backdrop-blur-[3px] py-1 px-2 rounded-xl shadow-2xl overflow-hidden"
+        data-tauri-drag-region
+      >
         <input
           ref={inputRef}
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          className="w-full px-4 bg-transparent text-gray-800 text-lg outline-none"
+          className="w-full px-2 bg-transparent text-gray-800 text-lg outline-none"
           placeholder="wazzzzzup"
         />
       </div>
