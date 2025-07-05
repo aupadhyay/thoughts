@@ -1,26 +1,43 @@
 import { useState, useEffect, useRef } from "react"
+import { invoke } from "@tauri-apps/api/core"
 
 export function QuickPanel() {
   const [input, setInput] = useState("")
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const LINE_HEIGHT = 20 // pixels per line
 
   useEffect(() => {
     inputRef.current?.focus()
   }, [])
 
+  useEffect(() => {
+    const textarea = inputRef.current
+    if (textarea) {
+      const lineCount = (input.match(/\n/g) || []).length + 1
+      textarea.style.height = `${lineCount * LINE_HEIGHT}px`
+    }
+  }, [input])
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      invoke("close_quickpanel")
+    }
+  }
+
   return (
-    <div className="flex w-full items-start justify-center">
+    <div className="flex w-full items-start justify-center h-auto">
       <div
         className="w-[600px] bg-white/20 backdrop-blur-[3px] py-1 px-2 rounded-xl shadow-2xl overflow-hidden"
         data-tauri-drag-region
       >
-        <input
+        <textarea
           ref={inputRef}
-          type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          className="w-full px-2 bg-transparent text-gray-800 text-lg outline-none"
+          onKeyDown={handleKeyDown}
+          className="w-full px-2 bg-transparent text-white text-lg outline-none placeholder:text-white/50 resize-none overflow-hidden leading-[20px]"
           placeholder="wazzzzzup"
+          rows={1}
         />
       </div>
     </div>
