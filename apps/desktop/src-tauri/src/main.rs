@@ -1,4 +1,10 @@
-use tauri::Manager;
+use tauri::{
+    image::Image,
+    menu::{Menu, MenuItem},
+    tray::TrayIconBuilder,
+    Manager,
+};
+
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 fn toggle_launchbar(app: &tauri::AppHandle) {
@@ -17,6 +23,33 @@ fn toggle_launchbar(app: &tauri::AppHandle) {
 fn main() {
     tauri::Builder::default()
         .setup(|app| {
+            let app_handle = app.app_handle();
+
+            let icon = Image::from_bytes(include_bytes!("../icons/32x32.png"))?;
+
+            let open_i = MenuItem::with_id(app, "open", "Open", true, Some("⌥+Space"))?;
+            let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+            let menu = Menu::with_items(app, &[&open_i, &quit_i])?;
+
+            let _tray = TrayIconBuilder::with_id("tray")
+                .icon(icon)
+                .icon_as_template(true)
+                .menu(&menu)
+                .on_menu_event(|tray, event| {
+                    let app_handle = tray.app_handle();
+                    match event.id().as_ref() {
+                        "open" => {
+                            let window = app_handle.get_webview_window("quick-panel").unwrap();
+                            window.show().unwrap();
+                            window.set_focus().unwrap();
+                        }
+                        "quit" => app_handle.exit(0),
+                        _ => {}
+                    }
+                })
+                .build(app_handle)
+                .unwrap();
+
             let window = app.get_webview_window("quick-panel").unwrap();
 
             // Configure window to be non-activating, always on top, and movable
@@ -34,15 +67,7 @@ fn main() {
                 _ => {}
             });
 
-            #[cfg(debug_assertions)]
-            {
-                window.open_devtools();
-                window.close_devtools();
-            }
-
-            // Define shortcuts
             let alt_space_shortcut = Shortcut::new(Some(Modifiers::ALT), Code::Space);
-
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
 
             // Register the plugin with handlers
