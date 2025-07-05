@@ -1,9 +1,18 @@
 import { QuickPanel } from "./components/quick-panel"
+import { MainWindow } from "./components/main-window"
+import { createBrowserRouter, RouterProvider } from "react-router-dom"
+
+const router = createBrowserRouter([
+  {
+    path: "/main-window",
+    element: <MainWindow />,
+  },
+  {
+    path: "/quick-panel",
+    element: <QuickPanel />,
+  },
+])
 
 export function App() {
-  return (
-    <div className="flex h-screen w-screen">
-      <QuickPanel isOpen={true} />
-    </div>
-  )
+  return <RouterProvider router={router} />
 }

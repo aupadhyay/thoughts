@@ -39,7 +39,7 @@ fn main() {
                     let app_handle = tray.app_handle();
                     match event.id().as_ref() {
                         "open" => {
-                            let window = app_handle.get_webview_window("quick-panel").unwrap();
+                            let window = app_handle.get_webview_window("main").unwrap();
                             window.show().unwrap();
                             window.set_focus().unwrap();
                         }

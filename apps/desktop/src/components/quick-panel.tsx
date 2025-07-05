@@ -1,20 +1,12 @@
 import { useState, useEffect, useRef } from "react"
 
-interface QuickPanelProps {
-  isOpen: boolean
-}
-
-export function QuickPanel({ isOpen }: QuickPanelProps) {
+export function QuickPanel() {
   const [input, setInput] = useState("")
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (isOpen) {
-      inputRef.current?.focus()
-    }
-  }, [isOpen])
-
-  if (!isOpen) return null
+    inputRef.current?.focus()
+  }, [])
 
   return (
     <div className="flex w-full items-start justify-center">

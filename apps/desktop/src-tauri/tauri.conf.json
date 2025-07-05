@@ -29,7 +29,22 @@
         "center": false,
         "x": 400,
         "y": 100,
-        "visible": false
+        "visible": false,
+        "url": "/quick-panel"
+      },
+      {
+        "label": "main",
+        "title": "Thoughts",
+        "width": 800,
+        "height": 600,
+        "resizable": true,
+        "maximizable": true,
+        "minimizable": true,
+        "closable": true,
+        "decorations": true,
+        "center": true,
+        "visible": false,
+        "url": "/main-window"
       }
     ],
     "security": {
