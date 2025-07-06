@@ -1,6 +1,9 @@
 import { QuickPanel } from "./components/quick-panel"
 import { MainWindow } from "./components/main-window"
 import { createBrowserRouter, RouterProvider } from "react-router-dom"
+import { trpc, trpcClient } from "./api"
+import { useState } from "react"
+import { QueryClient } from "@tanstack/react-query"
 
 const router = createBrowserRouter([
   {
@@ -14,5 +17,10 @@ const router = createBrowserRouter([
 ])
 
 export function App() {
-  return <RouterProvider router={router} />
+  const [queryClient] = useState(() => new QueryClient())
+  return (
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <RouterProvider router={router} />
+    </trpc.Provider>
+  )
 }

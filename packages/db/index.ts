@@ -1,16 +1,9 @@
-import "dotenv/config"
-import { drizzle } from "drizzle-orm/better-sqlite3"
+import dotenv from "dotenv"
+import path from "node:path"
+
+dotenv.config({ path: path.resolve(__dirname, "../../.env") })
+
 import { thoughts } from "./schema"
+import { createThought, getThoughts, getThoughtById } from "./lib"
 
-if (!process.env.DB_FILE_PATH) {
-  throw new Error("DB_FILE_PATH is not set")
-}
-
-const db = drizzle(process.env.DB_FILE_PATH)
-
-async function main() {
-  const count = await db.$count(thoughts)
-  console.log("Number of thoughts: ", count)
-}
-
-main()
+export { thoughts, createThought, getThoughts, getThoughtById }

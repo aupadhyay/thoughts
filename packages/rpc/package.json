@@ -1,5 +1,5 @@
 {
-  "name": "@thoughts/db",
+  "name": "@thoughts/rpc",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -10,11 +10,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@types/better-sqlite3": "^7.6.13",
-    "better-sqlite3": "^11.10.0",
-    "dotenv": "^16.5.0",
-    "drizzle-kit": "^0.31.4",
-    "drizzle-orm": "^0.44.2",
-    "tsx": "^4.19.4"
+    "@thoughts/db": "workspace:*",
+    "@trpc/server": "^11.4.3",
+    "tsx": "^4.19.4",
+    "zod": "^3.25.43"
   }
 }

@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from "react"
 import { invoke } from "@tauri-apps/api/core"
+import { trpc } from "../api"
 
 export function QuickPanel() {
   const [input, setInput] = useState("")
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const LINE_HEIGHT = 20 // pixels per line
+
+  const { mutate: createThought } = trpc.createThought.useMutation()
 
   useEffect(() => {
     inputRef.current?.focus()
@@ -21,6 +24,21 @@ export function QuickPanel() {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") {
       invoke("close_quickpanel")
+    }
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault()
+      const trimmedInput = input.trim()
+      if (trimmedInput) {
+        createThought(trimmedInput, {
+          onSuccess: () => {
+            setInput("")
+          },
+          onError: (error) => {
+            console.error(error)
+            setInput(`Error: ${error.message}`)
+          },
+        })
+      }
     }
   }
 

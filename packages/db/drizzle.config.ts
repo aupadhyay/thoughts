@@ -1,4 +1,8 @@
-import "dotenv/config"
+import dotenv from "dotenv"
+import path from "node:path"
+
+dotenv.config({ path: path.resolve(__dirname, "../../.env") })
+
 import { defineConfig } from "drizzle-kit"
 
 if (!process.env.DB_FILE_PATH) {
