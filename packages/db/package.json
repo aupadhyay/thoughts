@@ -1,5 +1,5 @@
 {
-  "name": "thoughts",
+  "name": "db",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -9,8 +9,11 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "devDependencies": {
-    "biome": "^0.3.3",
-    "prettier": "^3.6.2"
+  "dependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "better-sqlite3": "^11.10.0",
+    "drizzle-kit": "^0.31.4",
+    "drizzle-orm": "^0.44.2",
+    "tsx": "^4.19.4"
   }
 }
