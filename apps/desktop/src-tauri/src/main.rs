@@ -1,3 +1,4 @@
+use colored::Colorize;
 use tauri::{
     image::Image,
     menu::{Menu, MenuItem},
@@ -6,6 +7,8 @@ use tauri::{
 };
 
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
+use tauri_plugin_shell::process::CommandEvent;
+use tauri_plugin_shell::ShellExt;
 
 #[tauri::command]
 fn close_quickpanel(app: tauri::AppHandle) {
@@ -29,6 +32,7 @@ fn toggle_launchbar(app: &tauri::AppHandle) {
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_shell::init())
         .setup(|app| {
             let app_handle = app.app_handle();
 
@@ -63,16 +67,34 @@ fn main() {
             window.set_decorations(false).unwrap();
             window.set_always_on_top(true).unwrap();
 
+            // Run sidecar tRPC server
+            let sidecar_command = app.shell().sidecar("server").unwrap();
+            let (mut rx, mut _child) = sidecar_command.spawn().expect("Failed to spawn sidecar");
+
+            tauri::async_runtime::spawn(async move {
+                while let Some(event) = rx.recv().await {
+                    if let CommandEvent::Stdout(ref line_bytes) = event {
+                        let line = String::from_utf8_lossy(line_bytes);
+                        println!("{} {}", "[tRPC]".bright_blue().bold(), line);
+                    }
+
+                    if let CommandEvent::Stderr(ref line_bytes) = event {
+                        let line = String::from_utf8_lossy(line_bytes);
+                        println!("{} {}", "[tRPC]".bright_red().bold(), line);
+                    }
+                }
+            });
+
             // Set up window to close when it loses focus
-            // let window_clone = window.clone();
-            // window.on_window_event(move |event| match event {
-            //     tauri::WindowEvent::Focused(focused) => {
-            //         if !focused {
-            //             let _ = window_clone.hide();
-            //         }
-            //     }
-            //     _ => {}
-            // });
+            let window_clone = window.clone();
+            window.on_window_event(move |event| match event {
+                tauri::WindowEvent::Focused(focused) => {
+                    if !focused {
+                        let _ = window_clone.hide();
+                    }
+                }
+                _ => {}
+            });
 
             let alt_space_shortcut = Shortcut::new(Some(Modifiers::ALT), Code::Space);
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);

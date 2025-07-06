@@ -15,6 +15,7 @@
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-global-shortcut": "^2.2.1",
     "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/plugin-shell": "~2",
     "@thoughts/db": "workspace:*",
     "@thoughts/rpc": "workspace:*",
     "@trpc/client": "^11.4.3",
