@@ -15,7 +15,7 @@ a lightweight macOS application for quickly capturing thoughts using a global ke
 - automated follow ups or reminders
   - with taken action or not
   - daily cron jobs that run with local LLM, actions can be async dispatched
-  - lead to converstaions
+  - lead to conversations
 - plugin system, attach different contexts depending on which app you launch from
 
 ## goals
