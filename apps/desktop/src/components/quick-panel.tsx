@@ -45,7 +45,7 @@ export function QuickPanel() {
   return (
     <div className="flex w-full items-start justify-center h-auto">
       <div
-        className="w-[600px] bg-white/20 backdrop-blur-[3px] py-1 px-2 rounded-xl shadow-2xl overflow-hidden"
+        className="w-[600px] bg-white/20 backdrop-blur-[3px] pt-2 pb-1 px-2 rounded-xl shadow-2xl overflow-hidden"
         data-tauri-drag-region
       >
         <textarea

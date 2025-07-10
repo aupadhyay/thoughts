@@ -41,10 +41,11 @@
         "maximizable": true,
         "minimizable": true,
         "closable": true,
-        "decorations": true,
+        "transparent": true,
         "center": true,
         "visible": false,
-        "url": "/main-window"
+        "url": "/main-window",
+        "titleBarStyle": "Overlay"
       }
     ],
     "security": {

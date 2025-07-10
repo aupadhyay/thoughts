@@ -1,14 +1,34 @@
 use colored::Colorize;
+use std::{str::FromStr, sync::Mutex};
 use tauri::{
     image::Image,
     menu::{Menu, MenuItem},
     tray::TrayIconBuilder,
-    Manager,
+    Manager, RunEvent, Url, WebviewUrl, WebviewWindowBuilder,
 };
-
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
-use tauri_plugin_shell::process::CommandEvent;
+use tauri_plugin_shell::process::{CommandChild, CommandEvent};
 use tauri_plugin_shell::ShellExt;
+
+mod config;
+use config::Config;
+
+// State type to hold our child process and config
+struct AppState {
+    server: Mutex<Option<CommandChild>>,
+    config: Config,
+}
+
+fn create_main_window(app: &tauri::AppHandle) {
+    let win_builder =
+        WebviewWindowBuilder::from_config(app, &app.config().app.windows.get(1).unwrap().clone())
+            .unwrap()
+            .build()
+            .unwrap();
+
+    let _ = win_builder.show();
+    let _ = win_builder.set_focus();
+}
 
 #[tauri::command]
 fn close_quickpanel(app: tauri::AppHandle) {
@@ -31,10 +51,15 @@ fn toggle_launchbar(app: &tauri::AppHandle) {
 }
 
 fn main() {
-    tauri::Builder::default()
+    let config = Config::new().expect("Failed to initialize config");
+
+    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
             let app_handle = app.app_handle();
+
+            // Cleanup any existing server process
+            config.cleanup_existing_server();
 
             let icon = Image::from_bytes(include_bytes!("../icons/32x32.png"))?;
 
@@ -50,9 +75,12 @@ fn main() {
                     let app_handle = tray.app_handle();
                     match event.id().as_ref() {
                         "open" => {
-                            let window = app_handle.get_webview_window("main").unwrap();
-                            window.show().unwrap();
-                            window.set_focus().unwrap();
+                            if let Some(window) = app_handle.get_webview_window("main") {
+                                window.show().unwrap();
+                                window.set_focus().unwrap();
+                            } else {
+                                create_main_window(app_handle);
+                            }
                         }
                         "quit" => app_handle.exit(0),
                         _ => {}
@@ -68,19 +96,39 @@ fn main() {
             window.set_always_on_top(true).unwrap();
 
             // Run sidecar tRPC server
-            let sidecar_command = app.shell().sidecar("server").unwrap();
-            let (mut rx, mut _child) = sidecar_command.spawn().expect("Failed to spawn sidecar");
+            let sidecar = app.shell().sidecar("server").unwrap();
+            let (mut rx, child) = sidecar.spawn().expect("Failed to spawn sidecar");
 
+            // Store the PID in the file
+            config
+                .write_pid_file(child.pid())
+                .expect("Failed to write PID file");
+
+            // Store the child process handle and config in state
+            app.manage(AppState {
+                server: Mutex::new(Some(child)),
+                config,
+            });
+
+            // Set up event handling for stdout/stderr
             tauri::async_runtime::spawn(async move {
                 while let Some(event) = rx.recv().await {
-                    if let CommandEvent::Stdout(ref line_bytes) = event {
-                        let line = String::from_utf8_lossy(line_bytes);
-                        println!("{} {}", "[tRPC]".bright_blue().bold(), line);
-                    }
-
-                    if let CommandEvent::Stderr(ref line_bytes) = event {
-                        let line = String::from_utf8_lossy(line_bytes);
-                        println!("{} {}", "[tRPC]".bright_red().bold(), line);
+                    match event {
+                        CommandEvent::Stdout(line) => {
+                            println!(
+                                "{} {}",
+                                "[tRPC]".bright_blue().bold(),
+                                String::from_utf8_lossy(&line)
+                            );
+                        }
+                        CommandEvent::Stderr(line) => {
+                            println!(
+                                "{} {}",
+                                "[tRPC]".bright_red().bold(),
+                                String::from_utf8_lossy(&line)
+                            );
+                        }
+                        _ => {}
                     }
                 }
             });
@@ -120,7 +168,20 @@ fn main() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![close_quickpanel])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .invoke_handler(tauri::generate_handler![close_quickpanel]);
+
+    builder
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app, event| match event {
+            RunEvent::ExitRequested { .. } | RunEvent::Exit => {
+                if let Some(state) = app.try_state::<AppState>() {
+                    if let Some(mut child) = state.server.lock().unwrap().take() {
+                        let _ = child.kill();
+                    }
+                    state.config.cleanup_pid_file();
+                }
+            }
+            _ => {}
+        });
 }

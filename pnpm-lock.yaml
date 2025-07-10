@@ -47,6 +47,9 @@ importers:
       '@trpc/react-query':
         specifier: ^11.4.3
         version: 11.4.3(@tanstack/react-query@5.81.5(react@18.3.1))(@trpc/client@11.4.3(@trpc/server@11.4.3(typescript@5.6.3))(typescript@5.6.3))(@trpc/server@11.4.3(typescript@5.6.3))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.6.3)
+      date-fns:
+        specifier: ^4.1.0
+        version: 4.1.0
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -1820,6 +1823,9 @@ packages:
   dashdash@1.14.1:
     resolution: {integrity: sha512-jRFi8UDGo6j+odZiEpjazZaWqEal3w/basFjQHQEwVtZJGDpxbH1MeYluwCS8Xq5wmLJooDlMgvVarmWfGM44g==}
     engines: {node: '>=0.10'}
+
+  date-fns@4.1.0:
+    resolution: {integrity: sha512-Ukq0owbQXxa/U3EGtsdVBkR1w7KOQ5gIBqdH2hkvknzZPYvBxb/aa6E8L7tmjFtkwZBu3UXBbjIgPo/Ez4xaNg==}
 
   debug@2.6.9:
     resolution: {integrity: sha512-bC7ElrdJaJnPbAP+1EotYvqZsb3ecl5wi6Bfi6BJTUcNowp6cvspg0jXznRTKDjm/E7AdgFBVeAPVMNcKGsHMA==}
@@ -4029,7 +4035,7 @@ snapshots:
       '@babel/traverse': 7.28.0
       '@babel/types': 7.28.0
       convert-source-map: 2.0.0
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.1
       gensync: 1.0.0-beta.2
       json5: 2.2.3
       semver: 6.3.1
@@ -4121,7 +4127,7 @@ snapshots:
       '@babel/parser': 7.28.0
       '@babel/template': 7.27.2
       '@babel/types': 7.28.0
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.1
     transitivePeerDependencies:
       - supports-color
 
@@ -5465,9 +5471,15 @@ snapshots:
     dependencies:
       assert-plus: 1.0.0
 
+  date-fns@4.1.0: {}
+
   debug@2.6.9:
     dependencies:
       ms: 2.0.0
+
+  debug@4.4.1:
+    dependencies:
+      ms: 2.1.3
 
   debug@4.4.1(supports-color@5.5.0):
     dependencies:
