@@ -1,0 +1,1 @@
+tell application "Arc" to get URL of active tab of front window 

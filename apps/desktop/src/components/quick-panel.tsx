@@ -2,6 +2,11 @@ import { useState, useEffect, useRef } from "react"
 import { invoke } from "@tauri-apps/api/core"
 import { trpc } from "../api"
 
+interface SpotifyTrackInfo {
+  artist: string
+  track: string
+}
+
 export function QuickPanel() {
   const [input, setInput] = useState("")
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -21,7 +26,7 @@ export function QuickPanel() {
     }
   }, [input])
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = async (e: React.KeyboardEvent) => {
     if (e.key === "Escape") {
       invoke("close_quickpanel")
     }
@@ -29,15 +34,40 @@ export function QuickPanel() {
       e.preventDefault()
       const trimmedInput = input.trim()
       if (trimmedInput) {
-        createThought(trimmedInput, {
-          onSuccess: () => {
-            setInput("")
-          },
-          onError: (error) => {
-            console.error(error)
-            setInput(`Error: ${error.message}`)
-          },
-        })
+        try {
+          // Get both Arc URL and Spotify info in parallel
+          const [url, spotifyInfo] = await Promise.all([
+            invoke<string>("active_arc_url"),
+            invoke<SpotifyTrackInfo>("get_spotify_track"),
+          ])
+
+          let contextInfo = `\n\nFrom: ${url}`
+          if (spotifyInfo.artist !== "Not playing") {
+            contextInfo += `\nListening to: ${spotifyInfo.track} by ${spotifyInfo.artist}`
+          }
+
+          createThought(trimmedInput + contextInfo, {
+            onSuccess: () => {
+              setInput("")
+            },
+            onError: (error) => {
+              console.error(error)
+              setInput(`Error: ${error.message}`)
+            },
+          })
+        } catch (error) {
+          console.error(error)
+          // If we can't get the context info, just create the thought without it
+          createThought(trimmedInput, {
+            onSuccess: () => {
+              setInput("")
+            },
+            onError: (error) => {
+              console.error(error)
+              setInput(`Error: ${error.message}`)
+            },
+          })
+        }
       }
     }
   }

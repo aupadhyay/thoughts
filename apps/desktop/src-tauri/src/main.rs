@@ -13,6 +13,9 @@ use tauri_plugin_shell::ShellExt;
 mod config;
 use config::Config;
 
+mod context;
+use context::{active_arc_url, get_spotify_track};
+
 // State type to hold our child process and config
 struct AppState {
     server: Mutex<Option<CommandChild>>,
@@ -168,7 +171,11 @@ fn main() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![close_quickpanel]);
+        .invoke_handler(tauri::generate_handler![
+            close_quickpanel,
+            active_arc_url,
+            get_spotify_track
+        ]);
 
     builder
         .build(tauri::generate_context!())
