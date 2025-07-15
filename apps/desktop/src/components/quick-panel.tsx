@@ -1,21 +1,56 @@
 import { useState, useEffect, useRef } from "react"
 import { invoke } from "@tauri-apps/api/core"
 import { trpc } from "../api"
+import { hide } from "@tauri-apps/api/app"
+import { getCurrentWindow } from "@tauri-apps/api/window"
 
 interface SpotifyTrackInfo {
   artist: string
   track: string
 }
 
+interface ContextInfo {
+  url: string
+  spotify: SpotifyTrackInfo
+}
+
 export function QuickPanel() {
   const [input, setInput] = useState("")
+  const [contextInfo, setContextInfo] = useState<ContextInfo | null>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const LINE_HEIGHT = 20 // pixels per line
 
   const { mutate: createThought } = trpc.createThought.useMutation()
 
+  const fetchContextInfo = async () => {
+    try {
+      const [url, spotifyInfo] = await Promise.all([
+        invoke<string>("active_arc_url"),
+        invoke<SpotifyTrackInfo>("get_spotify_track"),
+      ])
+      setContextInfo({ url, spotify: spotifyInfo })
+    } catch (error) {
+      console.error("Failed to fetch context:", error)
+    }
+  }
+
   useEffect(() => {
+    const window = getCurrentWindow()
+
+    const unlistenVisibilityChange = window.onFocusChanged(
+      ({ payload: focused }) => {
+        if (focused) {
+          fetchContextInfo()
+        }
+      }
+    )
+
+    fetchContextInfo()
     inputRef.current?.focus()
+
+    return () => {
+      unlistenVisibilityChange.then((unlisten) => unlisten())
+    }
   }, [])
 
   useEffect(() => {
@@ -28,54 +63,45 @@ export function QuickPanel() {
 
   const handleKeyDown = async (e: React.KeyboardEvent) => {
     if (e.key === "Escape") {
-      invoke("close_quickpanel")
+      await hide()
     }
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
       const trimmedInput = input.trim()
       if (trimmedInput) {
-        try {
-          // Get both Arc URL and Spotify info in parallel
-          const [url, spotifyInfo] = await Promise.all([
-            invoke<string>("active_arc_url"),
-            invoke<SpotifyTrackInfo>("get_spotify_track"),
-          ])
+        let thoughtText = trimmedInput
 
-          let contextInfo = `\n\nFrom: ${url}`
-          if (spotifyInfo.artist !== "Not playing") {
-            contextInfo += `\nListening to: ${spotifyInfo.track} by ${spotifyInfo.artist}`
+        if (contextInfo) {
+          thoughtText += `\n\nFrom: ${contextInfo.url}`
+          if (contextInfo.spotify.artist !== "Not playing") {
+            thoughtText += `\nListening to: ${contextInfo.spotify.track} by ${contextInfo.spotify.artist}`
           }
-
-          createThought(trimmedInput + contextInfo, {
-            onSuccess: () => {
-              setInput("")
-            },
-            onError: (error) => {
-              console.error(error)
-              setInput(`Error: ${error.message}`)
-            },
-          })
-        } catch (error) {
-          console.error(error)
-          // If we can't get the context info, just create the thought without it
-          createThought(trimmedInput, {
-            onSuccess: () => {
-              setInput("")
-            },
-            onError: (error) => {
-              console.error(error)
-              setInput(`Error: ${error.message}`)
-            },
-          })
         }
+
+        createThought(thoughtText, {
+          onSuccess: () => {
+            setInput("")
+          },
+          onError: (error) => {
+            console.error(error)
+            setInput(`Error: ${error.message}`)
+          },
+        })
       }
     }
+  }
+
+  const truncateUrl = (url: string) => {
+    if (url.length > 50) {
+      return `${url.substring(0, 47)}...`
+    }
+    return url
   }
 
   return (
     <div className="flex w-full items-start justify-center h-auto">
       <div
-        className="w-[600px] bg-white/20 backdrop-blur-[3px] pt-2 pb-1 px-2 rounded-xl shadow-2xl overflow-hidden"
+        className="w-[600px] bg-white/20 backdrop-blur-[3px] pt-2 pb-1 px-2 rounded-xl shadow-2xl overflow-hidden relative"
         data-tauri-drag-region
       >
         <textarea
@@ -87,6 +113,14 @@ export function QuickPanel() {
           placeholder="wazzzzzup"
           rows={1}
         />
+        {contextInfo && (
+          <div className="text-white/50 text-xs px-2 pb-1 pt-0.5">
+            {truncateUrl(contextInfo.url)}
+            {contextInfo.spotify.artist !== "Not playing" && (
+              <span>{` • ${contextInfo.spotify.track} by ${contextInfo.spotify.artist}`}</span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
