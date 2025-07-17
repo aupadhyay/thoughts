@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { invoke } from "@tauri-apps/api/core"
 import { trpc } from "../api"
-import { hide } from "@tauri-apps/api/app"
 import { getCurrentWindow } from "@tauri-apps/api/window"
 
 interface SpotifyTrackInfo {
@@ -18,7 +17,6 @@ export function QuickPanel() {
   const [input, setInput] = useState("")
   const [contextInfo, setContextInfo] = useState<ContextInfo | null>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
-  const LINE_HEIGHT = 20 // pixels per line
 
   const { mutate: createThought } = trpc.createThought.useMutation()
 
@@ -56,8 +54,10 @@ export function QuickPanel() {
   useEffect(() => {
     const textarea = inputRef.current
     if (textarea) {
-      const lineCount = (input.match(/\n/g) || []).length + 1
-      textarea.style.height = `${lineCount * LINE_HEIGHT}px`
+      // Reset height to auto to get proper scrollHeight
+      textarea.style.height = "auto"
+      // Set the height to scrollHeight which includes wrapped content
+      textarea.style.height = `${textarea.scrollHeight}px`
     }
   }, [input])
 
