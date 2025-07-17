@@ -63,7 +63,8 @@ export function QuickPanel() {
 
   const handleKeyDown = async (e: React.KeyboardEvent) => {
     if (e.key === "Escape") {
-      await hide()
+      const window = getCurrentWindow()
+      window.hide()
     }
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
