@@ -4,9 +4,14 @@ import { z } from "zod"
 
 const appRouter = router({
   createThought: publicProcedure
-    .input(z.string())
+    .input(
+      z.object({
+        content: z.string(),
+        metadata: z.string().nullable().optional(),
+      })
+    )
     .mutation(async ({ input }) => {
-      return await createThought(input)
+      return await createThought(input.content, input.metadata ?? null)
     }),
   getThoughts: publicProcedure.query(async () => {
     return await getThoughts()

@@ -3,19 +3,28 @@ import { invoke } from "@tauri-apps/api/core"
 import { trpc } from "../api"
 import { getCurrentWindow } from "@tauri-apps/api/window"
 
-interface SpotifyTrackInfo {
+export interface SpotifyTrackInfo {
   artist: string
   track: string
 }
 
-interface ContextInfo {
-  url: string
-  spotify: SpotifyTrackInfo
+export interface Image {
+  mimeType: string
+  dataUri: string
+}
+
+export interface ContextInfo {
+  url?: string
+  spotify?: SpotifyTrackInfo
+  images?: Image[]
 }
 
 export function QuickPanel() {
   const [input, setInput] = useState("")
   const [contextInfo, setContextInfo] = useState<ContextInfo | null>(null)
+  const [pastedImages, setPastedImages] = useState<
+    { mimeType: string; dataUri: string }[]
+  >([])
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
   const { mutate: createThought } = trpc.createThought.useMutation()
@@ -62,6 +71,15 @@ export function QuickPanel() {
   }, [input])
 
   const handleKeyDown = async (e: React.KeyboardEvent) => {
+    if (e.metaKey && e.key.toLowerCase() === "k") {
+      e.preventDefault()
+      try {
+        await invoke("open_main_window")
+      } catch (err) {
+        console.error("Failed to open main window", err)
+      }
+      return
+    }
     if (e.key === "Escape") {
       const window = getCurrentWindow()
       window.hide()
@@ -74,21 +92,74 @@ export function QuickPanel() {
 
         if (contextInfo) {
           thoughtText += `\n\nFrom: ${contextInfo.url}`
-          if (contextInfo.spotify.artist !== "Not playing") {
+          if (
+            contextInfo.spotify &&
+            contextInfo.spotify.artist !== "Not playing"
+          ) {
             thoughtText += `\nListening to: ${contextInfo.spotify.track} by ${contextInfo.spotify.artist}`
           }
         }
 
-        createThought(thoughtText, {
-          onSuccess: () => {
-            setInput("")
-          },
-          onError: (error) => {
-            console.error(error)
-            setInput(`Error: ${error.message}`)
-          },
-        })
+        const metadata = {
+          url: contextInfo?.url ?? null,
+          spotify: contextInfo?.spotify ?? null,
+          images: pastedImages.map((img) => ({
+            mimeType: img.mimeType,
+            dataUri: img.dataUri,
+          })),
+        }
+
+        createThought(
+          { content: thoughtText, metadata: JSON.stringify(metadata) },
+          {
+            onSuccess: () => {
+              setInput("")
+              setPastedImages([])
+            },
+            onError: (error) => {
+              console.error(error)
+              setInput(`Error: ${error.message}`)
+            },
+          }
+        )
       }
+    }
+  }
+
+  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items
+    if (!items) return
+    const imagePromises: Promise<{
+      mimeType: string
+      dataUri: string
+    } | null>[] = []
+    for (let i = 0; i < items.length; i += 1) {
+      const item = items[i]
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile()
+        if (file) {
+          imagePromises.push(
+            new Promise((resolve) => {
+              const reader = new FileReader()
+              reader.onload = () => {
+                resolve({
+                  mimeType: file.type,
+                  dataUri: reader.result as string,
+                })
+              }
+              reader.onerror = () => resolve(null)
+              reader.readAsDataURL(file)
+            })
+          )
+        }
+      }
+    }
+
+    const images = (await Promise.all(imagePromises)).filter(
+      (x): x is { mimeType: string; dataUri: string } => Boolean(x)
+    )
+    if (images.length > 0) {
+      setPastedImages((prev) => [...prev, ...images])
     }
   }
 
@@ -110,15 +181,24 @@ export function QuickPanel() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           className="w-full px-2 bg-transparent text-white text-lg outline-none placeholder:text-white/50 resize-none overflow-hidden leading-[20px]"
           placeholder="wazzzzzup"
           rows={1}
         />
-        {contextInfo && (
+        {(contextInfo || pastedImages.length > 0) && (
           <div className="text-white/50 text-xs px-2 pb-1 pt-0.5">
-            {truncateUrl(contextInfo.url)}
-            {contextInfo.spotify.artist !== "Not playing" && (
-              <span>{` • ${contextInfo.spotify.track} by ${contextInfo.spotify.artist}`}</span>
+            {contextInfo && (
+              <>
+                {truncateUrl(contextInfo.url ?? "")}
+                {contextInfo.spotify &&
+                  contextInfo.spotify.artist !== "Not playing" && (
+                    <span>{` • ${contextInfo.spotify.track} by ${contextInfo.spotify.artist}`}</span>
+                  )}
+              </>
+            )}
+            {pastedImages.length > 0 && (
+              <span>{`${contextInfo ? " • " : ""}Pasted image${pastedImages.length > 1 ? "s" : ""} (${pastedImages.length})`}</span>
             )}
           </div>
         )}

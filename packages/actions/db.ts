@@ -1,7 +1,7 @@
 import Database from "better-sqlite3"
-import path from "path"
-import { mkdir } from "fs/promises"
-import { existsSync } from "fs"
+import path from "node:path"
+import { mkdir } from "node:fs/promises"
+import { existsSync } from "node:fs"
 
 export interface Thought {
   id: number

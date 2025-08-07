@@ -5,8 +5,8 @@ import {
 } from "@asteasolutions/zod-to-openapi"
 import { z, ZodObject, ZodTypeAny, ZodPromise } from "zod"
 import * as actions from "./actions"
-import * as fs from "fs"
-import { Application } from "express"
+import * as fs from "node:fs"
+import type { Application } from "express"
 
 extendZodWithOpenApi(z)
 
@@ -112,7 +112,7 @@ export async function generateApi(app?: Application) {
   })
 
   fs.writeFileSync("openapi.json", JSON.stringify(openApiDocument, null, 2))
-  console.log(`OpenAPI specification saved to openapi.json`)
+  console.log("OpenAPI specification saved to openapi.json")
 
   return {
     openApiDocument,

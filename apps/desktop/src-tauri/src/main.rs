@@ -34,6 +34,16 @@ fn create_main_window(app: &tauri::AppHandle) {
 }
 
 #[tauri::command]
+fn open_main_window(app: tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.show();
+        let _ = window.set_focus();
+    } else {
+        create_main_window(&app);
+    }
+}
+
+#[tauri::command]
 fn close_quickpanel(app: tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("quick-panel") {
         window.hide().unwrap();
@@ -172,6 +182,7 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            open_main_window,
             close_quickpanel,
             active_arc_url,
             get_spotify_track

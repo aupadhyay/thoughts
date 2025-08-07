@@ -27,8 +27,12 @@ function dbSingleton() {
   return db
 }
 
-export async function createThought(content: string) {
-  return dbSingleton().insert(thoughts).values({ content }).returning().get()
+export async function createThought(content: string, metadata?: string | null) {
+  return dbSingleton()
+    .insert(thoughts)
+    .values({ content, metadata: metadata ?? null })
+    .returning()
+    .get()
 }
 
 export async function getThoughts() {

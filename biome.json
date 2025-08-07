@@ -8,6 +8,9 @@
     "linter": {
         "enabled": true,
         "rules": {
+            "suspicious": {
+                "noExplicitAny": "info"
+            },
             "a11y": {
                 "noAutofocus": "off"
             },
