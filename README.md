@@ -1,27 +1,15 @@
-# thoughts
+# wazzuppp
 
-a lightweight macOS application for quickly capturing thoughts using a global keyboard shortcut. features a floating window with a clean, modern interface similar to spotlight.
+a lightweight macOS application for quickly capturing thoughts. like raycast but for your thoughts. attaches system context. might do some other stuff later.
 
 ## features
 
-- floating cloudy window interface
-- attach context easily
-  - last 10 seconds screen recording before thought
-  - links visited before thought
-  - manually attach screenshots if needed
-- automatically categorized
+- floating cloudy window interface, write down wazzup
+- attach context: links visited, app used, song playing, anything applescript (for now)
+- automatically categorized (todo lol)
   - multiple thoughts in a short time span must be related
-  - embedding clustering?
-- automated follow ups or reminders
-  - with taken action or not
-  - daily cron jobs that run with local LLM, actions can be async dispatched
-  - lead to conversations
-- plugin system, attach different contexts depending on which app you launch from
-
-## goals
-
-- [x] fix consistent builds
-- [x] replace daily driver app
-- [x] clean up all UI / interfaces
-- [ ] attach context v0
-- [ ] plugin system v0
+  - basic embeddings at first
+- automated follow ups or reminders (todo lolol)
+  - starter conversation, with related thoughts as context
+  - daily cron jobs that run with local LLM
+- plugins, attach different contexts depending on which app you launch from (toooodooo)

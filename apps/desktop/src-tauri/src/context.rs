@@ -29,6 +29,13 @@ pub struct SpotifyTrackInfo {
     track: String,
 }
 
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct FocusedAppInfo {
+    name: String,
+    #[serde(rename = "bundleId")]
+    bundle_id: String,
+}
+
 #[tauri::command]
 pub fn get_spotify_track() -> Result<SpotifyTrackInfo, tauri::Error> {
     let script_path = get_script_path("get_spotify_track.applescript");
@@ -37,4 +44,14 @@ pub fn get_spotify_track() -> Result<SpotifyTrackInfo, tauri::Error> {
     let track_info: SpotifyTrackInfo = serde_json::from_str(&output_str)?;
 
     Ok(track_info)
+}
+
+#[tauri::command]
+pub fn get_focused_app() -> Result<FocusedAppInfo, tauri::Error> {
+    let script_path = get_script_path("get_focused_app.applescript");
+    let output_str = run_script(&script_path)?;
+
+    let app_info: FocusedAppInfo = serde_json::from_str(&output_str)?;
+
+    Ok(app_info)
 }

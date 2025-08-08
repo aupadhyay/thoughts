@@ -8,6 +8,11 @@ export interface SpotifyTrackInfo {
   track: string
 }
 
+export interface FocusedAppInfo {
+  name: string
+  bundleId: string
+}
+
 export interface Image {
   mimeType: string
   dataUri: string
@@ -16,6 +21,7 @@ export interface Image {
 export interface ContextInfo {
   url?: string
   spotify?: SpotifyTrackInfo
+  focusedApp?: FocusedAppInfo
   images?: Image[]
 }
 
@@ -31,11 +37,12 @@ export function QuickPanel() {
 
   const fetchContextInfo = async () => {
     try {
-      const [url, spotifyInfo] = await Promise.all([
+      const [url, spotifyInfo, focusedAppInfo] = await Promise.all([
         invoke<string>("active_arc_url"),
         invoke<SpotifyTrackInfo>("get_spotify_track"),
+        invoke<FocusedAppInfo>("get_focused_app"),
       ])
-      setContextInfo({ url, spotify: spotifyInfo })
+      setContextInfo({ url, spotify: spotifyInfo, focusedApp: focusedAppInfo })
     } catch (error) {
       console.error("Failed to fetch context:", error)
     }
@@ -92,6 +99,9 @@ export function QuickPanel() {
 
         if (contextInfo) {
           thoughtText += `\n\nFrom: ${contextInfo.url}`
+          if (contextInfo.focusedApp) {
+            thoughtText += `\nFocused app: ${contextInfo.focusedApp.name}`
+          }
           if (
             contextInfo.spotify &&
             contextInfo.spotify.artist !== "Not playing"
@@ -103,6 +113,7 @@ export function QuickPanel() {
         const metadata = {
           url: contextInfo?.url ?? null,
           spotify: contextInfo?.spotify ?? null,
+          focusedApp: contextInfo?.focusedApp ?? null,
           images: pastedImages.map((img) => ({
             mimeType: img.mimeType,
             dataUri: img.dataUri,
@@ -191,6 +202,9 @@ export function QuickPanel() {
             {contextInfo && (
               <>
                 {truncateUrl(contextInfo.url ?? "")}
+                {contextInfo.focusedApp && (
+                  <span>{`${contextInfo.url ? " • " : ""}${contextInfo.focusedApp.name}`}</span>
+                )}
                 {contextInfo.spotify &&
                   contextInfo.spotify.artist !== "Not playing" && (
                     <span>{` • ${contextInfo.spotify.track} by ${contextInfo.spotify.artist}`}</span>
