@@ -94,8 +94,13 @@ pub fn get_focused_app() -> Result<FocusedAppInfo, tauri::Error> {
 
 #[tauri::command]
 pub fn get_location() -> Result<LocationInfo, tauri::Error> {
-    let script_path = get_script_path("get_location.applescript");
-    let output_str = run_script(&script_path)?;
+    let output = Command::new("/opt/homebrew/bin/CoreLocationCLI")
+        .arg("--json")
+        .output()
+        .map_err(|e| tauri::Error::Io(e))?;
+
+    let output_str = String::from_utf8_lossy(&output.stdout).trim().to_owned();
+    println!("output_str: {}", output_str);
 
     let location_info: LocationInfo = serde_json::from_str(&output_str)?;
 
