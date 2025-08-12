@@ -13,6 +13,31 @@ export interface FocusedAppInfo {
   bundleId: string
 }
 
+export interface LocationInfo {
+  time_local: string
+  subThoroughfare?: string
+  name?: string
+  altitude: string
+  h_accuracy: string
+  thoroughfare?: string
+  region: string
+  locality?: string
+  administrativeArea?: string
+  longitude: string
+  timeZone: string
+  direction: string
+  isoCountryCode?: string
+  subLocality?: string
+  latitude: string
+  time: string
+  address?: string
+  subAdministrativeArea?: string
+  speed: string
+  postalCode?: string
+  v_accuracy: string
+  country?: string
+}
+
 export interface Image {
   mimeType: string
   dataUri: string
@@ -22,6 +47,7 @@ export interface ContextInfo {
   url?: string
   spotify?: SpotifyTrackInfo
   focusedApp?: FocusedAppInfo
+  location?: LocationInfo
   images?: Image[]
 }
 
@@ -37,12 +63,19 @@ export function QuickPanel() {
 
   const fetchContextInfo = async () => {
     try {
-      const [url, spotifyInfo, focusedAppInfo] = await Promise.all([
-        invoke<string>("active_arc_url"),
-        invoke<SpotifyTrackInfo>("get_spotify_track"),
-        invoke<FocusedAppInfo>("get_focused_app"),
-      ])
-      setContextInfo({ url, spotify: spotifyInfo, focusedApp: focusedAppInfo })
+      const [url, spotifyInfo, focusedAppInfo, locationInfo] =
+        await Promise.all([
+          invoke<string>("active_arc_url"),
+          invoke<SpotifyTrackInfo>("get_spotify_track"),
+          invoke<FocusedAppInfo>("get_focused_app"),
+          invoke<LocationInfo>("get_location"),
+        ])
+      setContextInfo({
+        url,
+        spotify: spotifyInfo,
+        focusedApp: focusedAppInfo,
+        location: locationInfo,
+      })
     } catch (error) {
       console.error("Failed to fetch context:", error)
     }
@@ -108,12 +141,23 @@ export function QuickPanel() {
           ) {
             thoughtText += `\nListening to: ${contextInfo.spotify.track} by ${contextInfo.spotify.artist}`
           }
+          if (contextInfo.location) {
+            const loc = contextInfo.location
+            if (loc.address) {
+              thoughtText += `\nLocation: ${loc.address}`
+            } else if (loc.locality && loc.administrativeArea) {
+              thoughtText += `\nLocation: ${loc.locality}, ${loc.administrativeArea}`
+            } else if (loc.name) {
+              thoughtText += `\nLocation: ${loc.name}`
+            }
+          }
         }
 
         const metadata = {
           url: contextInfo?.url ?? null,
           spotify: contextInfo?.spotify ?? null,
           focusedApp: contextInfo?.focusedApp ?? null,
+          location: contextInfo?.location ?? null,
           images: pastedImages.map((img) => ({
             mimeType: img.mimeType,
             dataUri: img.dataUri,
@@ -209,6 +253,16 @@ export function QuickPanel() {
                   contextInfo.spotify.artist !== "Not playing" && (
                     <span>{` • ${contextInfo.spotify.track} by ${contextInfo.spotify.artist}`}</span>
                   )}
+                {contextInfo.location && (
+                  <span>
+                    {" • "}
+                    {contextInfo.location.address ||
+                      (contextInfo.location.locality &&
+                      contextInfo.location.administrativeArea
+                        ? `${contextInfo.location.locality}, ${contextInfo.location.administrativeArea}`
+                        : contextInfo.location.name || "Unknown location")}
+                  </span>
+                )}
               </>
             )}
             {pastedImages.length > 0 && (

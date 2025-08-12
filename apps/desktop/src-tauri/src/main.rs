@@ -14,7 +14,7 @@ mod config;
 use config::Config;
 
 mod context;
-use context::{active_arc_url, get_focused_app, get_spotify_track};
+use context::{active_arc_url, get_focused_app, get_location, get_spotify_track};
 
 // State type to hold our child process and config
 struct AppState {
@@ -186,7 +186,8 @@ fn main() {
             close_quickpanel,
             active_arc_url,
             get_spotify_track,
-            get_focused_app
+            get_focused_app,
+            get_location
         ]);
 
     builder

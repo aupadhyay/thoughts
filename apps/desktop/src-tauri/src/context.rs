@@ -36,6 +36,42 @@ pub struct FocusedAppInfo {
     bundle_id: String,
 }
 
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct LocationInfo {
+    #[serde(rename = "time_local")]
+    time_local: String,
+    #[serde(rename = "subThoroughfare")]
+    sub_thoroughfare: Option<String>,
+    name: Option<String>,
+    altitude: String,
+    #[serde(rename = "h_accuracy")]
+    h_accuracy: String,
+    thoroughfare: Option<String>,
+    region: String,
+    locality: Option<String>,
+    #[serde(rename = "administrativeArea")]
+    administrative_area: Option<String>,
+    longitude: String,
+    #[serde(rename = "timeZone")]
+    time_zone: String,
+    direction: String,
+    #[serde(rename = "isoCountryCode")]
+    iso_country_code: Option<String>,
+    #[serde(rename = "subLocality")]
+    sub_locality: Option<String>,
+    latitude: String,
+    time: String,
+    address: Option<String>,
+    #[serde(rename = "subAdministrativeArea")]
+    sub_administrative_area: Option<String>,
+    speed: String,
+    #[serde(rename = "postalCode")]
+    postal_code: Option<String>,
+    #[serde(rename = "v_accuracy")]
+    v_accuracy: String,
+    country: Option<String>,
+}
+
 #[tauri::command]
 pub fn get_spotify_track() -> Result<SpotifyTrackInfo, tauri::Error> {
     let script_path = get_script_path("get_spotify_track.applescript");
@@ -54,4 +90,14 @@ pub fn get_focused_app() -> Result<FocusedAppInfo, tauri::Error> {
     let app_info: FocusedAppInfo = serde_json::from_str(&output_str)?;
 
     Ok(app_info)
+}
+
+#[tauri::command]
+pub fn get_location() -> Result<LocationInfo, tauri::Error> {
+    let script_path = get_script_path("get_location.applescript");
+    let output_str = run_script(&script_path)?;
+
+    let location_info: LocationInfo = serde_json::from_str(&output_str)?;
+
+    Ok(location_info)
 }
