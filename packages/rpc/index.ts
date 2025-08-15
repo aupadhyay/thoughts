@@ -13,9 +13,11 @@ const appRouter = router({
     .mutation(async ({ input }) => {
       return await createThought(input.content, input.metadata ?? null)
     }),
-  getThoughts: publicProcedure.query(async () => {
-    return await getThoughts()
-  }),
+  getThoughts: publicProcedure
+    .input(z.object({ search: z.string().optional() }).optional())
+    .query(async ({ input }) => {
+      return await getThoughts(input?.search)
+    }),
 })
 
 export const buildRouter = () => appRouter

@@ -6,7 +6,7 @@ dotenv.config({ path: path.resolve(__dirname, "../../.env") })
 
 import { drizzle } from "drizzle-orm/better-sqlite3"
 import { thoughts } from "./schema"
-import { eq } from "drizzle-orm"
+import { eq, or, like } from "drizzle-orm"
 
 export function configPath() {
   if (!process.env.THOUGHTS_CONFIG_PATH) {
@@ -35,8 +35,20 @@ export async function createThought(content: string, metadata?: string | null) {
     .get()
 }
 
-export async function getThoughts() {
-  return dbSingleton().select().from(thoughts).orderBy(thoughts.timestamp).all()
+export async function getThoughts(search?: string) {
+  const query = dbSingleton().select().from(thoughts)
+  
+  if (search?.trim()) {
+    const searchTerm = `%${search.trim()}%`
+    query.where(
+      or(
+        like(thoughts.content, searchTerm),
+        like(thoughts.metadata, searchTerm)
+      )
+    )
+  }
+  
+  return query.orderBy(thoughts.timestamp).all()
 }
 
 export async function getThoughtById(id: number) {

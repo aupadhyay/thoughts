@@ -100,7 +100,6 @@ pub fn get_location() -> Result<LocationInfo, tauri::Error> {
         .map_err(|e| tauri::Error::Io(e))?;
 
     let output_str = String::from_utf8_lossy(&output.stdout).trim().to_owned();
-    println!("output_str: {}", output_str);
 
     let location_info: LocationInfo = serde_json::from_str(&output_str)?;
 
